@@ -5,18 +5,21 @@ import sys
 from tabulate import tabulate
 
 def main():
-    # input_handling()
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling()
-    end = len(littles)+len(bigs)+1
     [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
-    print(edges)
+    # print(littles,bigs)
+    # print(relationRanks)
+    # print(weightings)
+    print(littleToNum,bigToNum)
     print(weightings)
-    result = weightedMaxFlow(residGraph, weightings, end, edges)
-    print(*residGraph, sep = "\n")
-    print(littles)
-    print(bigs)
-    print("flow", result)
+    # print(*residGraph, sep = "\n")
+    result = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
     interpret(residGraph,littles, bigs)
+    # print(edges)
+    # print(weightings)
+    # print(littles)
+    # print(bigs)
+    # print("flow", result)
     
 def input_handling():
     if len(sys.argv) != 3:
@@ -97,31 +100,37 @@ def setUpResidGraph(littles, littleToNum, bigs, bigToNum, littlePrefs, bigPrefs,
         residGraph[0][i] = n
     for i in range(len(littles)+1,length-1):
         residGraph[i][-1] = n
-    for little in littles:
-        for big in littlePrefs[little]:
-            residGraph[littleToNum[little]][bigToNum[big]] = 1
+    # for little in littles:
+    #     for big in littlePrefs[little]:
+    #         residGraph[littleToNum[little]][bigToNum[big]] = 1
+    # for big in bigs:
+    #     for little in bigPrefs[big]:
+    #         residGraph[littleToNum[little]][bigToNum[big]] = 1
+    for i in range(1,len(littles)+1):
+        for j in range(len(littles)+1,length-1):
+            residGraph[i][j] = 1
     return residGraph
 
 def weightedMaxFlow(residGraph, relationRanks, end, edges):
     maxFlow = 0
-    print(*residGraph, sep = "\n")
+    # print(*residGraph, sep = "\n")
     while True:
-        # if not edges:
-        #     break
-        # path = edges.pop()
-        # path = [0, path[0], path[1], end]
-        path = djikstra(residGraph, relationRanks, end)
+        if not edges:
+            break
+        path = edges.pop()
+        path = [0, path[0], path[1], end]
+        # path1 = djikstra(residGraph, relationRanks, end)
         # path2 = bfs(residGraph, relationRanks, end)
+        # print(path)
         if not path:
             break
-        print(path)
         if not all([residGraph[path[i]][path[i+1]] for i in range(len(path)-1)]):
             continue
         for i in range(len(path)-1):
             residGraph[path[i]][path[i+1]] -= 1
             residGraph[path[i+1]][path[i]] += 1
         maxFlow += 1
-        print(*residGraph, sep = "\n")
+        # print(*residGraph, sep = "\n")
     return maxFlow
 
 def djikstra(residGraph, weightings, end):
@@ -130,7 +139,6 @@ def djikstra(residGraph, weightings, end):
     visited[0] = True
     parents = [-1]*len(residGraph)
     dist = [0]*len(residGraph)
-    dist[0] = 0
     while q:
         print(q)
         (weight, node) = heapq.heappop(q)
@@ -150,19 +158,21 @@ def djikstra(residGraph, weightings, end):
                 parents[i] = node
             elif dist[i] > weight:
                 dist[i] = weight
-                for j in range(len(q)):
-                    if q[j][1] == i and weight > q[j][0]:
-                        q[j] = (weight, i)
-                        parents[i] = node
-                        heapq.heapify(q)
-                        break
-        # print(q)
+                parents[i] = node
+                decreaseKey(q, weight, i)
     if parents[-1] == -1:
         return None
     path = [len(residGraph)-1]
     while path[-1]:
         path.append(parents[path[-1]])
     return path[::-1]
+
+def decreaseKey(q, weight, i):
+    for j in q:
+        if j[1] == i:
+            j = (weight, i)
+            heapq.heapify(q)
+            break
 
 def bfs(residGraph, relationRanks, end):
     q = Queue()

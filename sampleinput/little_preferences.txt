@@ -5,12 +5,12 @@ Nate Kimball
 4. Sam Klein
 5. Ben Ross
 
-Nate Wellz
-1. Zach Harris
+Jameson Sandler
+1. Sam Klein
 2. Cesar Engelhard
-3. Sam Klein
-4. Ben Ross
-5. Zach Harris
+3. Andy Ringold
+4. Zach Harris
+5. Ben Ross
 
 Colin Dockter
 1. Cesar Engelhard
@@ -19,16 +19,16 @@ Colin Dockter
 4. Andy Ringold
 5. Zach Harris
 
-Jameson Sandler
-1. Sam Klein
-2. Cesar Engelhard
-3. Andy Ringold
-4. Zach Harris
-5. Ben Ross
-
 Robert
 1. Ben Ross
 2. Andy Ringold
 3. Cesar Engelhard
 4. Zach Harris
 5. Sam Klein
+
+Nate Wellz
+1. Zach Harris
+2. Cesar Engelhard
+3. Sam Klein
+4. Ben Ross
+5. Andy Ringold
