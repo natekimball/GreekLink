@@ -8,9 +8,10 @@ def main():
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling()
     [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
     # print(littles,bigs)
+    # print(edges)
     # print(relationRanks)
-    # print(weightings)
     # print(littleToNum,bigToNum)
+    # print(weightings)
     # print(weightings)
     # print(*residGraph, sep = "\n")
     flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
@@ -146,9 +147,9 @@ def djikstra(residGraph, weightings, end):
     parents = [-1]*len(residGraph)
     dist = [0]*len(residGraph)
     while q:
-        print(q)
+        # print(q)
         (weight, node) = heapq.heappop(q)
-        print("node: ",node, "weight:",weight)
+        # print("node: ",node, "weight:",weight)
         if node == len(residGraph)-1:
             break
         for i, val in enumerate(residGraph[node]):
@@ -203,23 +204,17 @@ def bfs(residGraph, relationRanks, end):
     return path[::-1]
 
 def weighting(relationRanks, littleToNum, bigToNum):
-    # table = [[0, 0.3, 0.25, 0.2, 0.15, 0.1],
-    #         [0.34, 0.693, 0.347, 0.231, 0.173, 0.139],
-    #         [0.3, 0.405, 0.203, 0.135, 0.101, 0.081],
-    #         [0.26, 0.288, 0.144, 0.096, 0.072, 0.058],
-    #         [0.22, 0.223, 0.112, 0.074, 0.056, 0.045],
-    #         [0.05, 0.182, 0.091, 0.061, 0.046, 0.036]]
-    
-    table = [[0, 0.3, 0.25, 0.2, 0.15, 0.1],
-            [0.34, 0.693, 0.347, 0.201, 0.115, 0.081],
-            [0.3, 0.405, 0.231, 0.135, 0.095, 0.069],
-            [0.26, 0.288, 0.144, 0.123, 0.074, 0.05],
-            [0.22, 0.223, 0.150, 0.080, 0.056, 0.045],
-            [0.05, 0.182, 0.091, 0.061, 0.046, 0.036]]
+    table = [[ 1, 10,  7,  5,  4,  2],
+             [11, 36, 34, 30, 24, 21],
+             [ 9, 35, 32, 26, 23, 18],
+             [ 8, 33, 27, 25, 19, 15],
+             [ 6, 31, 28, 20, 16, 13],
+             [ 3, 29, 22, 17, 14, 12]]
     weightings = {}
     edges = [0]*len(relationRanks)
     i = 0
     for [a,b],rank in relationRanks.items():
+        # print([a,b],rank, -table[rank[0]][rank[1]])
         edges[i]=(littleToNum[a],bigToNum[b])
         weightings[(littleToNum[a],bigToNum[b])] = -table[rank[0]][rank[1]]
         i+=1
