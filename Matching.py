@@ -8,7 +8,7 @@ def main():
     # input_handling()
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling()
     end = len(littles)+len(bigs)+1
-    [edges, weightings] = weighting(relationRanks, littles, bigs, littleToNum, bigToNum)
+    [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
     print(edges)
     print(weightings)
     result = weightedMaxFlow(residGraph, weightings, end, edges)
@@ -106,12 +106,12 @@ def weightedMaxFlow(residGraph, relationRanks, end, edges):
     maxFlow = 0
     print(*residGraph, sep = "\n")
     while True:
-        if not edges:
-            break
-        path = edges.pop()
-        path = [0, path[0], path[1], end]
-        path1 = djikstra(residGraph, relationRanks, end)
-        path2 = bfs(residGraph, relationRanks, end)
+        # if not edges:
+        #     break
+        # path = edges.pop()
+        # path = [0, path[0], path[1], end]
+        path = djikstra(residGraph, relationRanks, end)
+        # path2 = bfs(residGraph, relationRanks, end)
         if not path:
             break
         print(path)
@@ -129,32 +129,32 @@ def djikstra(residGraph, weightings, end):
     visited = [False]*len(residGraph)
     visited[0] = True
     parents = [-1]*len(residGraph)
+    dist = [0]*len(residGraph)
+    dist[0] = 0
     while q:
-        # print(q)
+        print(q)
         (weight, node) = heapq.heappop(q)
-        # print("node: ",node, "weight:",weight)
+        print("node: ",node, "weight:",weight)
         if node == len(residGraph)-1:
             break
         for i, val in enumerate(residGraph[node]):
-            if val<=0 or i<=node:
+            if val<=0:
                 continue
-            if i == 0 or i == end or node == 0 or node == end:
-                weight = 0
-            elif i > node:
+            weight = dist[node]
+            if (node, i) in weightings:
                 weight += weightings[(node,i)]
-            else:
-                weight += weightings[(i,node)]
             if not visited[i]:
+                dist[i] = weight
                 visited[i] = True
-                heapq.heappush(q, (weight, i))
+                heapq.heappush(q, (dist[i], i))
                 parents[i] = node
-            else:
+            elif dist[i] > weight:
+                dist[i] = weight
                 for j in range(len(q)):
-                    if q[j][1] == i:
-                        if weight > q[j][0]:
-                            q[j] = (weight, i)
-                            parents[i] = node
-                            heapq.heapify(q)
+                    if q[j][1] == i and weight > q[j][0]:
+                        q[j] = (weight, i)
+                        parents[i] = node
+                        heapq.heapify(q)
                         break
         # print(q)
     if parents[-1] == -1:
@@ -186,7 +186,7 @@ def bfs(residGraph, relationRanks, end):
         path.append(parents[path[-1]])
     return path[::-1]
 
-def weighting(relationRanks, littles, bigs, littleToNum, bigToNum):
+def weighting(relationRanks, littleToNum, bigToNum):
     table = [[0, 0.3, 0.26, 0.22, 0.18, 0.14],
             [0.25, 0.693, 0.347, 0.231, 0.173, 0.139],
             [0.2, 0.405, 0.203, 0.135, 0.101, 0.081],
