@@ -4,6 +4,10 @@ from queue import Queue
 import sys
 from tabulate import tabulate
 
+def big_little_match(littlefile, bigfile):
+    [result, headers] = match(littlefile, bigfile)
+    return big_little_interpret(result, headers)
+
 def match(littlefile, bigfile):
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling(littlefile, bigfile)
     [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
@@ -229,6 +233,12 @@ def interpret(residGraph, littles, bigs, flow):
     else:
         headers=["BIGS","LITTLES"]
         return [yourLittles, headers]
+    
+def big_little_interpret(result,headers):
+    output = []
+    for a,bs in result.items():
+        output.append([a,", ".join(bs)])
+    return tabulate(output, headers=headers, tablefmt="grid")
 
 if __name__ == '__main__':
     # littlefilename = "sampleinput/little_preferences.txt"
@@ -247,8 +257,4 @@ if __name__ == '__main__':
     #     bigfilename = input("Enter filename consisting of big's rankings of littles:\t")
     littlefile = open(littlefilename, "r")
     bigfile = open(bigfilename, "r")
-    [result, headers] = match(littlefile, bigfile)
-    output = []
-    for a,bs in result.items():
-        output.append([a,", ".join(bs)])
-    print(tabulate(output, headers=headers, tablefmt="grid"))
+    print(big_little_match(littlefile, bigfile))
