@@ -4,73 +4,51 @@ from queue import Queue
 import sys
 from tabulate import tabulate
 
-def main():
-    [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling()
+def match(littlefile, bigfile):
+    [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling(littlefile, bigfile)
     [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
+    # print(*residGraph, sep = "\n")
+    flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
+    [result, headers] = interpret(residGraph,littles, bigs, flow)
+    return [result, headers]
     # print(littles,bigs)
     # print(edges)
     # print(relationRanks)
     # print(littleToNum,bigToNum)
     # print(weightings)
-    # print(weightings)
-    # print(*residGraph, sep = "\n")
-    flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
-    interpret(residGraph,littles, bigs, flow)
-    # print(edges)
-    # print(weightings)
-    # print(littles)
-    # print(bigs)
     # print("flow", flow)
     
-def input_handling():
-    if len(sys.argv) != 3:
-        # filename = input("Enter filename consisting of little's rankings of bigs:\t")
-        # filename = "sampleinput/little_preferences.txt"
-        filename = "sampleinput/10littles.txt"
-        # filename = "sampleinput/6bigs.txt"
-    else:
-        filename = sys.argv[1]
-    file = open(filename, "r")
-
+def input_handling(littlefile, bigfile):
     relationRanks = {}
     littles = []
     littleToNum = {}
     littlePrefs = {}
-    little = file.readline().strip()
+    little = littlefile.readline().strip()
     x = 1
     while little != "":
         littles.append(little)
         littleToNum[little]=x
         littlePrefs[little] = []
         for i in range(5):
-            [rank, big] = file.readline().strip().split(". ")
+            [rank, big] = littlefile.readline().strip().split(". ")
             relationRanks[(little, big)] = [int(rank),0]
             # relationRanks[(big, little)] = [int(rank),0]
             littlePrefs[little].append(big)
-        file.readline()
-        little = file.readline().strip()
+        littlefile.readline()
+        little = littlefile.readline().strip()
         x +=1
-        
-    if len(sys.argv) != 3:
-        # filename = input("Enter filename consisting of big's rankings of littles:\t")
-        # filename = "sampleinput/big_preferences.txt"
-        filename = "sampleinput/6bigs.txt"
-        # filename = "sampleinput/10littles.txt"
-    else:
-        filename = sys.argv[1]
-
-    file = open(filename, "r")
-
+    littlefile.close()
+    
     bigToNum = {}
     bigs = []
     bigPrefs = {}
-    big = file.readline().strip()
+    big = bigfile.readline().strip()
     while big != "":
         bigs.append(big)
         bigToNum[big] = x
         bigPrefs[big] = []
         for i in range(5):
-            [rank, little] = file.readline().strip().split(". ")
+            [rank, little] = bigfile.readline().strip().split(". ")
             if little not in littles:
                 print("Error: " + little + " is not a little")
                 exit()
@@ -80,8 +58,8 @@ def input_handling():
             relationRanks[(little, big)][1] = int(rank)
             # relationRanks[(big, little)][1] = int(rank)
             bigPrefs[big].append(little)
-        file.readline()
-        big = file.readline().strip()
+        bigfile.readline()
+        big = bigfile.readline().strip()
         x+=1
     if len(littles) > len(bigs):
         n = math.ceil(len(littles)/len(bigs))
@@ -89,6 +67,7 @@ def input_handling():
     else:
         n = 1
         m = math.ceil(len(bigs)/len(littles))
+    bigfile.close()
     # print("littles",littles)
     # print("littleToNum",littleToNum)
     # print("bigs",bigs)
@@ -97,7 +76,7 @@ def input_handling():
     # print("bigPrefs",bigPrefs)
     # print("n",n)
     # print("relationRanks",relationRanks)
-    # let n be the max cardinality of a matching
+    # let n/c be the max cardinality of a matching
     residGraph = setUpResidGraph(littles, littleToNum, bigs, bigToNum, littlePrefs, bigPrefs, n, m, length=x+1)
     return [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum]
 
@@ -210,6 +189,12 @@ def weighting(relationRanks, littleToNum, bigToNum):
              [ 8, 33, 27, 25, 19, 15],
              [ 6, 31, 28, 20, 16, 13],
              [ 3, 29, 22, 17, 14, 12]]
+    # alt = [[0, 5, 4, 3, 2, 1],
+    #        [5,16 15,13,10, 5],
+    #        [4,15,14,12, 8, 4],
+    #        [3,13, 12,9, 6, 3],
+    #        [2,10, 8, 6, 4, 2],
+    #        [1, 5, 4, 3, 2, 1]]
     weightings = {}
     edges = [0]*len(relationRanks)
     i = 0
@@ -236,25 +221,34 @@ def interpret(residGraph, littles, bigs, flow):
                 yourBigs[littles[j-1]].append(bigs[i-len(littles)-1])
                 # print(littles[j-1] + " is matched with " + bigs[i-len(littles)-1])
     if flow<max(len(littles),len(bigs)):
-        print("No stable matching, some people are unmatched")
+        print("No stable matching, some people are unmatched. Check your input files.")
     output = []
     if len(bigs)>len(littles):
         headers = ["LITTLES", "BIGS"]
-        # print("LITTLES\t\t\t\tBIGS")
-        for l,bs in yourBigs.items():
-            # print(l + "\t\t\t" + ", ".join(bs))
-            output.append([l,", ".join(bs)])
+        return [yourBigs, headers]
     else:
         headers=["BIGS","LITTLES"]
-        # print("BIG\t\t\t\tLITTLES")
-        for b,ls in yourLittles.items():
-            # print(b + "\t\t\t" + ", ".join(ls))
-            output.append([b,", ".join(ls)])
-    print(tabulate(output,headers))
-    return [yourLittles, yourBigs]
-    
+        return [yourLittles, headers]
 
 if __name__ == '__main__':
-    main()
-# we could come up with a better solution to ranking the weightings
-# perhaps give more weight if they both rank each other via multiplication or multiplying the logarithms of each rank
+    # littlefilename = "sampleinput/little_preferences.txt"
+    littlefilename = "sampleinput/10littles.txt"
+    # littlefilename = "sampleinput/6bigs.txt"
+    # bigfilename = "sampleinput/big_preferences.txt"
+    bigfilename = "sampleinput/6bigs.txt"
+    # bigfilename = "sampleinput/10littles.txt"
+    if "-l" in sys.argv:
+        littlefilename = sys.argv[sys.argv.index("-l")+1]
+    # else:
+    #     littlefilename = input("Enter filename consisting of little's rankings of bigs:\t")
+    if "-b" in sys.argv:
+        bigfilename = sys.argv[sys.argv.index("-b")+1]
+    # else:
+    #     bigfilename = input("Enter filename consisting of big's rankings of littles:\t")
+    littlefile = open(littlefilename, "r")
+    bigfile = open(bigfilename, "r")
+    [result, headers] = match(littlefile, bigfile)
+    output = []
+    for a,bs in result.items():
+        output.append([a,", ".join(bs)])
+    print(tabulate(output, headers=headers, tablefmt="grid"))
