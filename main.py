@@ -4,8 +4,8 @@ import Matching
 
 app = FastAPI()
 
-@app.post("/matchbiglittles")
-async def uploadfiles(littlefile: UploadFile = File(...), bigfile: UploadFile = File(...)):
+@app.post("/big_little_match")
+async def match(littlefile: UploadFile = File(...), bigfile: UploadFile = File(...)):
     f1, f2 = await handlefiles(littlefile, bigfile)
     [headers, result] = Matching.big_little_match(f1,f2)
     return {
@@ -14,9 +14,23 @@ async def uploadfiles(littlefile: UploadFile = File(...), bigfile: UploadFile = 
     }
 
 @app.post("/match")
-async def uploadfiles(file1: UploadFile = File(...), file2: UploadFile = File(...)):
+async def match(file1: UploadFile = File(...), file2: UploadFile = File(...)):
     f1,f2 = await handlefiles(file1,file2)
     result = Matching.match(f1,f2)
+    return result
+
+@app.post("/custom_match/{table}/{cols}/{rows}")
+async def match(table, cols, rows, file1: UploadFile = File(...), file2: UploadFile = File(...)):
+    rows, cols = int(rows), int(cols)
+    tablelist = [int(x) for x in table.split(",")]
+    table = [[0 for _ in range(cols)] for _ in range(rows)]
+    x = 0
+    for i in range(cols):
+        for j in range(rows):
+            table[i][j] = tablelist[x]
+            x+=1
+    f1,f2 = await handlefiles(file1,file2)
+    result = Matching.custom_match(f1,f2, table)
     return result
 
 async def handlefiles(file1, file2):

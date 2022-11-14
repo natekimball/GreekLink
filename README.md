@@ -1,2 +1,2 @@
 # RankedMatching
-A novel weighted bipartite matching algorithm for maximizing the mutual rankings of pairs. The algorithm matches individuals from two disjoint sets who have each ranked their ideal partners in the other group in order of favorite to least favorite.
+A novel greedy algorithm for weighted bipartite matching, also known as the assignment problem. The algorithm matches individuals from two disjoint sets who have each ranked their ideal partners in the other group in order of favorite to least favorite. The algorithm maximizes the mutual rankings of pairs, and is guaranteed to match each element in one set to at least one element in the other.

@@ -25,6 +25,10 @@ def big_little_match(littlefile, bigfile):
     residGraph, littles, bigs, flow = algorithm(littlefile, bigfile, table)
     return big_little_interpret(residGraph, littles, bigs, flow)
 
+def custom_match(littlefile, bigfile, table):
+    [residGraph, littles, bigs, flow] = algorithm(littlefile, bigfile, table)
+    return interpret(residGraph,littles, bigs, flow)
+
 def algorithm(littlefile, bigfile, table):
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling(littlefile, bigfile)
     [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum, table)
