@@ -12,4 +12,5 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7000"]
 
+# docker build --pull --rm -f "Dockerfile" -t rankedmatching:latest "."
 # docker run  -p 7000:7000 rankedmatching:latest
