@@ -1,6 +1,7 @@
+import uvicorn
 from fastapi import FastAPI, File, UploadFile
 import Matching
-# from mangum import Mangum
+from mangum import Mangum
 
 app = FastAPI()
 
@@ -43,7 +44,7 @@ async def handlefiles(file1, file2):
     f1,f2 = open("resources/input/littlefile.txt", "r"), open("resources/input/bigfile.txt", "r")
     return f1,f2
 
-# Mangum(app)
+handler = Mangum(app)
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="localhost", port=7000)
