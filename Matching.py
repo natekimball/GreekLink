@@ -4,17 +4,33 @@ from queue import Queue
 import sys
 from tabulate import tabulate
 
-def big_little_match(littlefile, bigfile):
-    [result, headers] = match(littlefile, bigfile)
-    return big_little_interpret(result, headers)
-
 def match(littlefile, bigfile):
+    table = [[0,  5,  4,  3,  2,  1],
+             [5, 21, 20, 18, 15, 10],
+             [4, 20, 19, 17, 13,  9],
+             [3, 18, 17, 14, 11,  8],
+             [2, 15, 13, 11,  9,  7],
+             [1, 10,  9,  8,  7,  6]]
+    # decrease weight of 0s
+    residGraph, littles, bigs, flow = algorithm(littlefile, bigfile, table)
+    return interpret(residGraph,littles, bigs, flow)
+
+def big_little_match(littlefile, bigfile):
+    table = [[ 1, 10,  7,  5,  4,  2],
+             [11, 36, 34, 30, 24, 21],
+             [ 9, 35, 32, 26, 23, 18],
+             [ 8, 33, 27, 25, 19, 15],
+             [ 6, 31, 28, 20, 16, 13],
+             [ 3, 29, 22, 17, 14, 12]]
+    residGraph, littles, bigs, flow = algorithm(littlefile, bigfile, table)
+    return big_little_interpret(residGraph, littles, bigs, flow)
+
+def algorithm(littlefile, bigfile, table):
     [residGraph, littles, bigs, relationRanks, littleToNum, bigToNum] = input_handling(littlefile, bigfile)
-    [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum)
+    [edges, weightings] = weighting(relationRanks, littleToNum, bigToNum, table)
     # print(*residGraph, sep = "\n")
     flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
-    [result, headers] = interpret(residGraph,littles, bigs, flow)
-    return [result, headers]
+    return residGraph,littles,bigs,flow
     # print(littles,bigs)
     # print(edges)
     # print(relationRanks)
@@ -110,7 +126,6 @@ def weightedMaxFlow(residGraph, relationRanks, end, edges):
         (u,v) = edges.pop()
         path = [0, u, v, end]
         # path1 = djikstra(residGraph, relationRanks, end)
-        # path2 = bfs(residGraph, relationRanks, end)
         # print(path)
         # if not path:
         #     break
@@ -164,7 +179,7 @@ def decreaseKey(q, weight, i):
             heapq.heapify(q)
             break
 
-def bfs(residGraph, relationRanks, end):
+def bfs(residGraph, end):
     q = Queue()
     q.put(0)
     visited = [False]*len(residGraph)
@@ -186,26 +201,14 @@ def bfs(residGraph, relationRanks, end):
         path.append(parents[path[-1]])
     return path[::-1]
 
-def weighting(relationRanks, littleToNum, bigToNum):
-    table = [[ 1, 10,  7,  5,  4,  2],
-             [11, 36, 34, 30, 24, 21],
-             [ 9, 35, 32, 26, 23, 18],
-             [ 8, 33, 27, 25, 19, 15],
-             [ 6, 31, 28, 20, 16, 13],
-             [ 3, 29, 22, 17, 14, 12]]
-    # alt = [[0, 5, 4, 3, 2, 1],
-    #        [5,16 15,13,10, 5],
-    #        [4,15,14,12, 8, 4],
-    #        [3,13, 12,9, 6, 3],
-    #        [2,10, 8, 6, 4, 2],
-    #        [1, 5, 4, 3, 2, 1]]
+def weighting(relationRanks, littleToNum, bigToNum, weights_table):
     weightings = {}
     edges = [0]*len(relationRanks)
     i = 0
     for [a,b],rank in relationRanks.items():
         # print([a,b],rank, -table[rank[0]][rank[1]])
         edges[i]=(littleToNum[a],bigToNum[b])
-        weightings[(littleToNum[a],bigToNum[b])] = -table[rank[0]][rank[1]]
+        weightings[(littleToNum[a],bigToNum[b])] = -weights_table[rank[0]][rank[1]]
         i+=1
         # maybe make un negative?
     edges.sort(key = lambda x: weightings[x], reverse=True)
@@ -226,27 +229,44 @@ def interpret(residGraph, littles, bigs, flow):
                 # print(littles[j-1] + " is matched with " + bigs[i-len(littles)-1])
     if flow<max(len(littles),len(bigs)):
         print("No stable matching, some people are unmatched. Check your input files.")
-    output = []
+    if len(bigs)>len(littles):
+        return yourBigs
+    else:
+        return yourLittles
+    
+def big_little_interpret(residGraph, littles, bigs, flow):
+    yourLittles = {}
+    yourBigs = {}
+    for i in range(len(littles)+1,len(residGraph)-1):
+        for j in range(1,len(littles)+1):
+            if residGraph[i][j] == 1:
+                if bigs[i-len(littles)-1] not in yourLittles:
+                    yourLittles[bigs[i-len(littles)-1]] = []
+                yourLittles[bigs[i-len(littles)-1]].append(littles[j-1])
+                if littles[j-1] not in yourBigs:
+                    yourBigs[littles[j-1]] = []
+                yourBigs[littles[j-1]].append(bigs[i-len(littles)-1])
+                # print(littles[j-1] + " is matched with " + bigs[i-len(littles)-1])
+    if flow<max(len(littles),len(bigs)):
+        print("No stable matching, some people are unmatched. Check your input files.")
     if len(bigs)>len(littles):
         headers = ["LITTLES", "BIGS"]
-        return [yourBigs, headers]
+        result = yourBigs
     else:
-        headers=["BIGS","LITTLES"]
-        return [yourLittles, headers]
-    
-def big_little_interpret(result,headers):
+        headers = ["BIGS","LITTLES"]
+        result = yourLittles
     output = []
     for a,bs in result.items():
         output.append([a,", ".join(bs)])
-    return tabulate(output, headers=headers, tablefmt="grid")
+    return [headers, output]
 
 if __name__ == '__main__':
-    # littlefilename = "sampleinput/little_preferences.txt"
-    littlefilename = "sampleinput/10littles.txt"
-    # littlefilename = "sampleinput/6bigs.txt"
-    # bigfilename = "sampleinput/big_preferences.txt"
-    bigfilename = "sampleinput/6bigs.txt"
-    # bigfilename = "sampleinput/10littles.txt"
+    # littlefilename = "resources/sampleinput/little_preferences.txt"
+    littlefilename = "resources/sampleinput/10littles.txt"
+    # littlefilename = "resources/sampleinput/6bigs.txt"
+    # bigfilename = "resources/sampleinput/big_preferences.txt"
+    bigfilename = "resources/sampleinput/6bigs.txt"
+    # bigfilename = "resources/sampleinput/10littles.txt"
     if "-l" in sys.argv:
         littlefilename = sys.argv[sys.argv.index("-l")+1]
     # else:
@@ -257,4 +277,5 @@ if __name__ == '__main__':
     #     bigfilename = input("Enter filename consisting of big's rankings of littles:\t")
     littlefile = open(littlefilename, "r")
     bigfile = open(bigfilename, "r")
-    print(big_little_match(littlefile, bigfile))
+    [headers, result] = big_little_match(littlefile, bigfile)
+    print(tabulate(result, headers=headers, tablefmt="grid"))
