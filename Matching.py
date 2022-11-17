@@ -12,7 +12,6 @@ def match(littlefile, bigfile):
              [3, 18, 17, 14, 11,  8],
              [2, 15, 13, 11,  9,  7],
              [1, 10,  9,  8,  7,  6]]
-    # decrease weight of 0s
     residGraph, littles, bigs, flow = algorithm(littlefile, bigfile, table)
     return interpret(residGraph,littles, bigs, flow)
 
@@ -34,54 +33,38 @@ def algorithm(littlefile, bigfile, table):
     [residGraph, littles, bigs, relationRanks, indexes, indexes] = input_handling(littlefile, bigfile)
     [edges, weightings] = weighting(relationRanks, indexes, table)
     flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
-    # print(*residGraph, sep = "\n")
-    # print(weightings)
     return residGraph,littles,bigs,flow
-    # print(littles,bigs)
-    # print(edges)
-    # print(relationRanks)
-    # print(indexes,indexes)
-    # print("flow", flow)
     
 def input_handling(littlefile, bigfile):
     relationRanks = {}
     littles = []
     indexes = {}
-    littlePrefs = {} # not needed
     little = littlefile.readline().strip()
     x = 1
     while little != "":
         littles.append(little)
         indexes[little]=x
-        littlePrefs[little] = []
-        for i in range(5):
+        for _ in range(5):
             [rank, big] = littlefile.readline().strip().split(". ")
             relationRanks[(little, big)] = [int(rank),0]
-            # relationRanks[(big, little)] = [int(rank),0]
-            littlePrefs[little].append(big)
         littlefile.readline()
         little = littlefile.readline().strip()
         x +=1
     littlefile.close()
     
     bigs = []
-    bigPrefs = {}
     big = bigfile.readline().strip()
     while big != "":
         bigs.append(big)
         indexes[big] = x
-        bigPrefs[big] = []
-        for i in range(5):
+        for _ in range(5):
             [rank, little] = bigfile.readline().strip().split(". ")
             if little not in littles:
                 print("Error: " + little + " is not a little")
                 exit()
             if (little,big) not in relationRanks:
                 relationRanks[(little, big)] = [0,0]
-                # relationRanks[(big, little)] = [0,0]
             relationRanks[(little, big)][1] = int(rank)
-            # relationRanks[(big, little)][1] = int(rank)
-            bigPrefs[big].append(little)
         bigfile.readline()
         big = bigfile.readline().strip()
         x+=1
@@ -92,14 +75,6 @@ def input_handling(littlefile, bigfile):
         n = 1
         m = math.ceil(len(bigs)/len(littles))
     bigfile.close()
-    # print("littles",littles)
-    # print("indexes",indexes)
-    # print("bigs",bigs)
-    # print("indexes",indexes)
-    # print("littlePrefs",littlePrefs)
-    # print("bigPrefs",bigPrefs)
-    # print("n",n)
-    # print("relationRanks",relationRanks)
     # let n/c be the max cardinality of a matching
     residGraph = setUpResidGraph(len(littles)+1, n, m, length=x+1)
     return [residGraph, littles, bigs, relationRanks, indexes, indexes]
@@ -120,24 +95,20 @@ def weighting(relationRanks, indexes, weights_table):
     edges = [0]*len(relationRanks)
     i = 0
     for [a,b],rank in relationRanks.items():
-        # print([a,b],rank, -table[rank[0]][rank[1]])
         edges[i]=(indexes[a],indexes[b])
         weightings[(indexes[a],indexes[b])] = -weights_table[rank[0]][rank[1]]
         i+=1
-        # maybe make un negative?
     edges.sort(key = lambda x: weightings[x], reverse=True)
     return [edges, weightings]
 
 def weightedMaxFlow(residGraph, relationRanks, end, edges):
     maxFlow = 0
-    # print(*residGraph, sep = "\n")
     while True:
         if not edges:
             break
         (u,v) = edges.pop()
         path = [0, u, v, end]
         # path1 = djikstra(residGraph, relationRanks, end)
-        # print(path)
         # if not path:
         #     break
         if not all([residGraph[path[i]][path[i+1]] for i in range(len(path)-1)]):
@@ -146,7 +117,6 @@ def weightedMaxFlow(residGraph, relationRanks, end, edges):
             residGraph[path[i]][path[i+1]] -= 1
             residGraph[path[i+1]][path[i]] += 1
         maxFlow += 1
-        # print(*residGraph, sep = "\n")
     return maxFlow
 
 def djikstra(residGraph, weightings, end):
@@ -156,9 +126,7 @@ def djikstra(residGraph, weightings, end):
     parents = [-1]*len(residGraph)
     dist = [0]*len(residGraph)
     while q:
-        # print(q)
         (weight, node) = heapq.heappop(q)
-        # print("node: ",node, "weight:",weight)
         if node == len(residGraph)-1:
             break
         for i, val in enumerate(residGraph[node]):
