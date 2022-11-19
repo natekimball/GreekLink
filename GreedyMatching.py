@@ -26,12 +26,12 @@ def big_little_match(littlefile, bigfile):
     return big_little_interpret(residGraph, littles, bigs, flow)
 
 def custom_match(littlefile, bigfile, table):
-    [residGraph, littles, bigs, flow] = algorithm(littlefile, bigfile, table)
+    residGraph, littles, bigs, flow = algorithm(littlefile, bigfile, table)
     return interpret(residGraph,littles, bigs, flow)
 
 def algorithm(littlefile, bigfile, table):
-    [residGraph, littles, bigs, relationRanks, indexes, indexes] = input_handling(littlefile, bigfile)
-    [edges, weightings] = weighting(relationRanks, indexes, table)
+    residGraph, littles, bigs, relationRanks, indexes = input_handling(littlefile, bigfile)
+    edges, weightings = weighting(relationRanks, indexes, table)
     flow = weightedMaxFlow(residGraph, weightings, len(littles)+len(bigs)+1, edges)
     return residGraph,littles,bigs,flow
     
@@ -77,7 +77,7 @@ def input_handling(littlefile, bigfile):
     bigfile.close()
     # let n/c be the max cardinality of a matching
     residGraph = setUpResidGraph(len(littles)+1, n, m, length=x+1)
-    return [residGraph, littles, bigs, relationRanks, indexes, indexes]
+    return [residGraph, littles, bigs, relationRanks, indexes]
 
 def setUpResidGraph(l, n, m, length):
     residGraph = [[0 for _ in range(length)] for _ in range(length)]
@@ -101,8 +101,9 @@ def weighting(relationRanks, indexes, weights_table):
     edges.sort(key = lambda x: weightings[x], reverse=True)
     return [edges, weightings]
 
-def weightedMaxFlow(residGraph, relationRanks, end, edges):
+def weightedMaxFlow(residGraph, weightings, end, edges):
     maxFlow = 0
+    totalCost = 0
     while True:
         if not edges:
             break
@@ -113,10 +114,12 @@ def weightedMaxFlow(residGraph, relationRanks, end, edges):
         #     break
         if not all([residGraph[path[i]][path[i+1]] for i in range(len(path)-1)]):
             continue
+        totalCost += weightings[(u,v)]
         for i in range(len(path)-1):
             residGraph[path[i]][path[i+1]] -= 1
             residGraph[path[i+1]][path[i]] += 1
         maxFlow += 1
+    print("Total cost: ",totalCost)
     return maxFlow
 
 def djikstra(residGraph, weightings, end):
@@ -180,6 +183,17 @@ def bfs(residGraph, end):
         path.append(parents[path[-1]])
     return path[::-1]
 
+def big_little_interpret(residGraph, littles, bigs, flow):
+    result = interpret(residGraph, littles, bigs, flow)
+    if len(bigs)>len(littles):
+        headers = ["LITTLES", "BIGS"]
+    else:
+        headers = ["BIGS","LITTLES"]
+    output = []
+    for a,bs in result.items():
+        output.append([a,", ".join(bs)])
+    return [headers, output]
+
 def interpret(residGraph, littles, bigs, flow):
     if flow<max(len(littles),len(bigs)):
         print("No stable matching, some people are unmatched. Check your input files.")
@@ -197,17 +211,6 @@ def interpret(residGraph, littles, bigs, flow):
     if len(bigs)>len(littles):
         return yourBigs
     return yourLittles
-    
-def big_little_interpret(residGraph, littles, bigs, flow):
-    result = interpret(residGraph, littles, bigs, flow)
-    if len(bigs)>len(littles):
-        headers = ["LITTLES", "BIGS"]
-    else:
-        headers = ["BIGS","LITTLES"]
-    output = []
-    for a,bs in result.items():
-        output.append([a,", ".join(bs)])
-    return [headers, output]
 
 if __name__ == '__main__':
     # littlefilename = "resources/sampleinput/little_preferences.txt"
