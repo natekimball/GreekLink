@@ -1,24 +1,18 @@
 FROM public.ecr.aws/lambda/python:3.8
 
+WORKDIR ${LAMBDA_TASK_ROOT}
+
 COPY . ${LAMBDA_TASK_ROOT}
 
 COPY requirements.txt  .
 
 RUN  pip3 install -r ${LAMBDA_TASK_ROOT}/requirements.txt --target "${LAMBDA_TASK_ROOT}" -U --no-cache-dir
 
-CMD [ "app.handler" ]
-
-# FROM public.ecr.aws/lambda/python:3.8
-
-# COPY . .
+CMD ["app.handler"]
 
 # ENV VIRTUAL_ENV=/match_env/
 # RUN python3 -m venv $VIRTUAL_ENV
 # ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-# RUN pip install --no-cache-dir --upgrade -r requirements.txt
-
-# CMD ["main.handler"]
 
 # docker build --pull --rm -f "Dockerfile.aws.lambda" -t rankedmatching:latest "."
 # docker run  -p 9000:7000 rankedmatching:latest
