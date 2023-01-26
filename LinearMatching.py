@@ -19,8 +19,8 @@ def big_little_match(littlefile, bigfile, bias):
                 [3, 18, 17, 14, 11,  8],
                 [2, 15, 13, 11,  9,  7],
                 [1, 10,  9,  8,  7,  6]]
-    littles, bigs, costGraph, x, solver, status, switched = algorithm(littlefile, bigfile, table)
-    return big_little_interpret(littles, bigs, costGraph, x, solver, status, switched)
+    littles, bigs, x, solver, status, switched = algorithm(littlefile, bigfile, table)
+    return big_little_interpret(littles, bigs, x, solver, status, switched)
 
 
 def match(littlefile, bigfile):
@@ -34,15 +34,15 @@ def match(littlefile, bigfile):
 
 
 def custom_match(littlefile, bigfile, table):
-    littles, bigs, costGraph, x, solver, status, switched = algorithm(littlefile, bigfile, table)
-    return interpret(littles, bigs, costGraph, x, solver, status)
+    littles, bigs, x, solver, status, _ = algorithm(littlefile, bigfile, table)
+    return interpret(littles, bigs, x, solver, status)
 
 
 def algorithm(littlefile, bigfile, table):
     [littles, bigs, relationRanks, n, switched] = handleinput(littlefile, bigfile)
     costGraph = setUpCostGraph(littles, bigs, relationRanks, table, switched)
     x, solver, status =  solve(littles, bigs, costGraph, n)
-    return [littles, bigs, costGraph, x, solver, status, switched]
+    return [littles, bigs, x, solver, status, switched]
 
 def solve(littles, bigs, costGraph, n):
     model = cp_model.CpModel()
@@ -53,8 +53,10 @@ def solve(littles, bigs, costGraph, n):
 
     for little in range(len(littles)):
         model.Add(sum(x[little, big] for big in range(len(bigs))) <= n)
+        model.Add(sum(x[little, big] for big in range(len(bigs))) > 0)
     for big in range(len(bigs)):
         model.AddExactlyOne([x[little, big] for little in range(len(littles))])
+        model.Add(sum(x[little, big] for little in range(len(littles))) > 0)
     
     objective_terms = []
     for little in range(len(littles)):
@@ -131,8 +133,8 @@ def setUpCostGraph(littles, bigs, relationRanks, table, switched):
                     little, big)][1]] if (little, big) in relationRanks else 0
     return costGraph
 
-def big_little_interpret(littles, bigs, costGraph, x, solver, status, switched):
-    result = interpret(littles, bigs, costGraph, x, solver, status)
+def big_little_interpret(littles, bigs, x, solver, status, switched):
+    result = interpret(littles, bigs, x, solver, status)
     if switched:
         headers = ["BIGS", "LITTLES"]
     else:
@@ -142,10 +144,12 @@ def big_little_interpret(littles, bigs, costGraph, x, solver, status, switched):
         output.append([a, ", ".join(bs)])
     return [headers, output]
 
-def interpret(littles, bigs, costGraph, x, solver, status):
+class UnsolvableException(Exception):
+    pass
+
+def interpret(littles, bigs, x, solver, status):
     if status != cp_model.OPTIMAL and status != cp_model.FEASIBLE:
-        print('No solution found')
-        exit()
+        raise UnsolvableException("Error: No solution found, double check your input")
     yourLittles = {}
     yourBigs = {}
     for little in range(len(littles)):
@@ -168,9 +172,11 @@ if __name__ == '__main__':
     # littlefilename = "resources/sampleinput/little_preferences.txt"
     littlefilename = "./resources/sampleinput/10littles.txt"
     # littlefilename = "resources/sampleinput/6bigs.txt"
+    # littlefilename = "resources/sampleinput/l_hard.txt"
     # bigfilename = "resources/sampleinput/big_preferences.txt"
     bigfilename = "resources/sampleinput/6bigs.txt"
     # bigfilename = "resources/sampleinput/10littles.txt"
+    # bigfilename = "resources/sampleinput/b_hard.txt"
     if "-l" in sys.argv:
         littlefilename = sys.argv[sys.argv.index("-l")+1]
     # else:
